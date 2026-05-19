@@ -120,29 +120,33 @@ def main():
     local_rows = []
     local_idx = 1
 
-    # Add PDFs from sikkim_policy_briefs
-    if os.path.exists(PDF_DIR):
-        for root, dirs, files in os.walk(PDF_DIR):
-            for file in files:
-                file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(file_path, BASE_DIR)
-                name, ext = os.path.splitext(file)
-                size_bytes = os.path.getsize(file_path)
-                mtime = os.path.getmtime(file_path)
-                modified_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
-                parent = os.path.basename(root)
+    # Add PDFs from local directories (both sikkim_policy_briefs and scraped_policy_pdfs)
+    local_dirs = [PDF_DIR, os.path.join(BASE_DIR, "scraped_policy_pdfs")]
+    for l_dir in local_dirs:
+        if os.path.exists(l_dir):
+            for root, dirs, files in os.walk(l_dir):
+                # Sort files to keep output ordered
+                for file in sorted(files):
+                    file_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(file_path, BASE_DIR)
+                    name, ext = os.path.splitext(file)
+                    size_bytes = os.path.getsize(file_path)
+                    mtime = os.path.getmtime(file_path)
+                    modified_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
+                    parent = os.path.basename(root)
 
-                local_rows.append({
-                    "S.No": local_idx,
-                    "Relative Path": rel_path.replace("\\", "/"),
-                    "Name": name,
-                    "Item Type": "PDF Document",
-                    "Extension": ext,
-                    "Size": get_file_size_display(size_bytes),
-                    "Modified": modified_str,
-                    "Parent Folder": parent
-                })
-                local_idx += 1
+                    local_rows.append({
+                        "S.No": local_idx,
+                        "Relative Path": rel_path.replace("\\", "/"),
+                        "Name": name,
+                        "Item Type": "PDF Document",
+                        "Extension": ext,
+                        "Size": get_file_size_display(size_bytes),
+                        "Modified": modified_str,
+                        "Parent Folder": parent
+                    })
+                    local_idx += 1
+
 
     # Add other core project files for completeness
     project_files = ["scraping.py", "requirements.txt", ".gitignore", "README.md"]
