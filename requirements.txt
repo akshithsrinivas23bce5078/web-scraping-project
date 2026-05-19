@@ -1,0 +1,16 @@
+# ===== Sikkim Policy Web Scraper - Requirements =====
+
+# --- PDF Text Extraction ---
+PyPDF2>=3.0.0               # Extract text content from PDF policy documents
+
+# --- Web Scraping ---
+requests>=2.31.0            # Make HTTP requests to target websites
+beautifulsoup4>=4.12.0      # Parse and extract data from HTML pages
+lxml>=4.9.0                 # Fast HTML/XML parser backend for BeautifulSoup
+
+# --- NLP / Keyword Extraction ---
+scikit-learn>=1.3.0         # TF-IDF vectorizer for extracting key topics from PDFs
+nltk>=3.8.0                 # Natural Language Toolkit for text preprocessing (stopwords, tokenization)
+
+# --- Data Output ---
+pandas>=2.0.0               # Structure scraped data into DataFrames, export to CSV/JSON
