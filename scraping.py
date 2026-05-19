@@ -94,7 +94,7 @@ def extract_all_pdfs(pdf_dir: str) -> dict:
     logger.info("STEP 1: Extracting text from PDF documents")
     logger.info("=" * 60)
 
-    pdf_files = glob.glob(os.path.join(pdf_dir, "*.pdf"))
+    pdf_files = glob.glob(os.path.join(pdf_dir, "**", "*.pdf"), recursive=True)
     if not pdf_files:
         logger.error(f"No PDF files found in {pdf_dir}")
         sys.exit(1)
