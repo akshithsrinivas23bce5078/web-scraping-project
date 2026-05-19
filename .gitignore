@@ -5,3 +5,7 @@ venv/
 env/
 .DS_Store
 *.log
+latest_pdfs/
+scraped_results/downloaded_pdfs/
+scraped_results/sikkim_policy_files_index.pdf
+
