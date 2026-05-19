@@ -21,14 +21,30 @@ def get_file_size_display(size_in_bytes):
 
 def main():
     print("=========================================================")
-    print("Generating Professional Excel File for Sikkim Policy Briefs")
+    print("Generating/Updating Excel File for Sikkim Policy Briefs")
     print("=========================================================")
 
     if not os.path.exists(PDF_DIR):
         print(f"Error: Policy briefs directory not found at {PDF_DIR}")
         return
 
-    # Scan the hierarchical structure under sikkim_policy_briefs
+    # 1. Load existing Excel file if it exists to retrieve current indexed entries
+    existing_rows = {}
+    if os.path.exists(OUTPUT_EXCEL):
+        try:
+            df_old = pd.read_excel(OUTPUT_EXCEL)
+            # Create a dictionary of existing rows indexed by Relative Path
+            for _, row in df_old.iterrows():
+                rel_path = row.get("Relative Path")
+                if pd.notna(rel_path):
+                    existing_rows[str(rel_path).strip()] = row.to_dict()
+            print(f"Loaded {len(existing_rows)} existing entries from Excel index.")
+        except Exception as e:
+            print(f"Warning: Could not read existing Excel index ({e}). Starting fresh.")
+    else:
+        print("No existing Excel index found. Generating index from scratch.")
+
+    # 2. Scan the hierarchical structure under sikkim_policy_briefs
     local_rows = []
     local_idx = 1
 
@@ -41,29 +57,44 @@ def main():
                 
             file_path = os.path.join(root, file)
             # Get path relative to the sikkim_policy_briefs folder
-            rel_path = os.path.relpath(file_path, PDF_DIR)
-            name, ext = os.path.splitext(file)
+            rel_path_suffix = os.path.relpath(file_path, PDF_DIR).replace('\\', '/')
+            rel_path = f"sikkim_policy_briefs/{rel_path_suffix}"
+            
             size_bytes = os.path.getsize(file_path)
             mtime = os.path.getmtime(file_path)
             modified_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
-            # The category is the immediate subfolder name
-            category = os.path.basename(root)
-            if category == "sikkim_policy_briefs":
-                category = "General"  # Fallback if file is in root
+            
+            # Check if this PDF is already present in the existing Excel sheet
+            if rel_path in existing_rows:
+                # Re-use the existing row, updating serial number, size, and modified time
+                row_data = existing_rows[rel_path]
+                row_data["S.No"] = local_idx
+                row_data["Size"] = get_file_size_display(size_bytes)
+                row_data["Modified"] = modified_str
+                local_rows.append(row_data)
+                print(f"Skipping duplicate: {file} is already indexed (reusing and updating metadata).")
+            else:
+                # Add it as a new PDF file
+                name, ext = os.path.splitext(file)
+                category = os.path.basename(root)
+                if category == "sikkim_policy_briefs":
+                    category = "General"  # Fallback if file is in root
 
-            # Beautify category name for display
-            display_category = category.replace("_", " ")
+                display_category = category.replace("_", " ")
 
-            local_rows.append({
-                "S.No": local_idx,
-                "Relative Path": f"sikkim_policy_briefs/{rel_path.replace('\\', '/')}",
-                "Name": name,
-                "Item Type": "PDF Policy Brief",
-                "Extension": ext,
-                "Size": get_file_size_display(size_bytes),
-                "Modified": modified_str,
-                "Category": display_category
-            })
+                new_row = {
+                    "S.No": local_idx,
+                    "Relative Path": rel_path,
+                    "Name": name,
+                    "Item Type": "PDF Policy Brief",
+                    "Extension": ext,
+                    "Size": get_file_size_display(size_bytes),
+                    "Modified": modified_str,
+                    "Category": display_category
+                }
+                local_rows.append(new_row)
+                print(f"Added new PDF to index: {file}")
+                
             local_idx += 1
 
     if not local_rows:
@@ -153,7 +184,7 @@ def main():
             ws.column_dimensions[col_letter].width = max(max_len + 4, 12)
 
     wb.save(OUTPUT_EXCEL)
-    print(f"Success! Excel sheet created and styled at: {OUTPUT_EXCEL}")
+    print(f"Success! Excel sheet updated and styled at: {OUTPUT_EXCEL}")
 
 if __name__ == "__main__":
     main()
